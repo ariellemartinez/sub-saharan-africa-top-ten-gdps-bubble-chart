@@ -1,0 +1,113 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Top Ten GDPs in Sub-Saharan Africa | World101</title>
+<style type="text/css">
+#container {
+    height: 100%;
+}
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+</style>
+</head>
+<body>
+<script src="https://code.highcharts.com/highcharts.js"></script> 
+<script src="https://code.highcharts.com/highcharts-more.js"></script> 
+<script src="https://code.highcharts.com/modules/exporting.js"></script> 
+<script src="https://world101.cfr.org/themes/custom/world101_bootstrap/components/asset-map-chart/chart/vendors/highchart-cfr-theme.js"></script> 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<div id="container"></div>
+<script type="text/javascript">
+
+$(function () {
+  Highcharts.setOptions({
+    lang: {
+      thousandsSep: ","
+    }
+  });
+  var text = "";
+  $.ajax({
+    url: "https://api.worldbank.org/v2/country?region=SSA&format=json",
+    complete: function (json) {
+      regionJson = JSON.parse(json.responseText);
+      $.each(regionJson[1], function (i, data) {
+        text += data.id + ";";
+      });
+      var trimmedText = text.slice(0, -1)
+      // Set up GDP data URL request
+      var url_country = "https://api.worldbank.org/v2/countries/" + trimmedText + "/indicators/NY.GDP.MKTP.CD?per_page=100&MRV=1&format=json";
+      var array_country = [];
+      $.ajax({
+        url: url_country,
+        complete: function (json) {
+          gdpJson = JSON.parse(json.responseText);
+          gdpData = gdpJson[1];
+          gdpData.sort(function (a, b) {
+            return b.value - a.value
+          });
+          var i;
+          for (i = 0; i < 10; i++) {
+            if (gdpData[i].value != null) {
+              array_country.push({
+                name: 'GDP in ' + gdpData[i].date + ' (current US$)',
+                data: [{
+                  name: gdpData[i].country.value,
+                  value: parseFloat(gdpData[i].value)
+                }]
+              });
+            };
+          }
+          // Create the Highchart
+          var chart = new Highcharts.Chart({
+            chart: {
+              type: 'packedbubble',
+              renderTo: 'container'
+            },
+            title: {
+              text: 'The Top Ten GDPs in Sub-Saharan Africa',
+              style: {
+                fontFamily: '"Larsseit", sans-serif',
+                color: '#04284a',
+                fontSize: '30px',
+                opacity: 1
+              }
+            },
+            credits: {
+              href: 'https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=ZG&most_recent_value_desc=true',
+              text: 'Source: World Bank.',
+              style: {
+                display: 'block'
+              }
+            },
+            tooltip: {
+              useHTML: true,
+              pointFormat: '<b>{point.name}:</b> ${point.value}'
+            },
+            legend: {
+              enabled: false
+            },
+            plotOptions: {
+              packedbubble: {
+                maxSize: '120%',
+                dataLabels: {
+                  enabled: true,
+                  format: '{point.name}'
+                }
+              }
+            },
+            series: array_country
+          }); // end Highchart
+        }
+      }); // end GDP data URL request
+    }
+  })
+}); // end function
+
+</script>
+</body>
+</html>
